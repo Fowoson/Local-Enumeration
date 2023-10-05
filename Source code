@@ -1,0 +1,76 @@
+import socket # This module allows me to use different functions, objects to build a network application
+import ipaddress
+import re # This module allows me to import regular expression which allows the system to recognize an IP address
+import getpass
+
+
+def main_menu(): # Main menu function that allows the user to navigate the toolkit
+    print("[ENTER AN OPTION]")
+    choice = int(input('''    (1)Port scanner
+    (2)System Information
+    (3)Domain/ IP Address
+    (4)Exit
+Enter:'''))
+    if choice == 2:
+        print(system_info())
+    if choice == 1:
+        print(port_scanner())
+    if choice == 3:
+        print(domain())
+    if choice == 4:
+        exit()
+    return
+
+
+def port_scanner(): # Port scanner function. This function will allow the user to insert a range of ports that will connect the user a port on a determined ip address.
+    # If the user successfully manages to connect to a port it will be considered open, if the latter fails it will be considered closed.
+    port_range_pattern = re.compile("([0-9]+)-([0-9]+)") # Variable which store the format in which the IP address must be inserted. It only recognizez IPv4 address.
+    port_min = 0  # Minimum port number assignable
+    port_max = 65535 # Maximum port number assignable
+
+    open_ports = [] # Ports are stored within this variable
+    while True: # A while statement is used to ensure that the user types in a valid IP Address, and if the condition is not, the script will print an error message
+        user_ip_address = input("Enter IP Address: ") # This variable is assigned to the user input
+        try:
+            ip_address_obj = ipaddress.ip_address(user_ip_address)
+            print("Valid IP Address has been entered")
+            break
+        except:
+            print("Incorrect IP Address has been entered")
+    while True: # A while statement is used to ensure the correct format is used for the range of ports that can be inserted
+        print("Enter the range of ports you want to scan in format: <int>-<int>") # Printing out what's required from the user
+        port_range = input("Enter port range: ")
+        port_range_valid = port_range_pattern.search(port_range.replace("", "")) # Variable in which the range of ports inserted by the user are stored in
+        if port_range_valid: # If statement that brekes the while loop if the range or ports is entered accordingly, otherwise the script will be looped again, asking the user to enter the range of ports in the pre-defined format.
+            port_min = int(port_range_valid.group(1))
+            port_max = int(port_range_valid.group(2))
+            break
+    for port in range(port_min, port_max + 1):
+        try:
+            # Creation of a socket object, and endpoint of communication, which allows an application to communicate with others across a network
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(0.5)
+                # The socket object that was just created will be used to connect to the ip address the user entered and the port number
+                s.connect((user_ip_address, port))
+                open_ports.append(port)
+        except:
+            #Because of lack of time, I script that would deal with closed ports wasn't created
+            pass
+    for port in open_ports:
+        print(f"Port {port} is open on {user_ip_address}") # This script iterates through, printing out all the ports that were succesfully connected to and the IP address
+        return
+
+
+def system_info(): # This function provides different information such as hostname, user, and ip address
+    print(f"Hostname: {socket.gethostname()}")
+    print(f"Current user: {getpass.getuser()}")
+    print(f"IP address: {socket.gethostbyname(socket.gethostname())}")
+    return
+
+
+def domain(): # This function check and prints out the IP address of the domain that is inserted by the user, which can be used in conjuction with the port scanner as it requires an IP address
+    domain_ = input("Enter domain: ")  # This variable store the user's value
+    ip_addr = socket.gethostbyname(domain_)
+    print(f" Ip address of {domain_} is {ip_addr}")
+    return
+main_menu()
